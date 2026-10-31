@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AryanSignAI | Gesture Lab</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><main class="shell">
+<nav><div class="brand"><b>A</b>Aryan<span>SignAI</span></div><small>● LIVE CAMERA · PROTOTYPE 02</small></nav>
+<header><p>COMPUTER VISION · REAL-TIME HAND TRACKING</p><h1>Make every<br><em>gesture visible.</em></h1>
+<div class="sub">Live hand tracking, estimated finger count and session detection history.</div></header>
+<section class="grid">
+<article class="panel"><div class="head">● CAMERA INPUT <small>LOCAL DEVICE</small></div>
+<div class="video"><img src="/video_feed" alt="Live webcam feed"></div>
+<div class="foot">MediaPipe hand landmarks <span>Up to 1 hand</span></div></article>
+<aside class="panel output"><div class="head">RECOGNITION OUTPUT <small id="pill">SEARCHING</small></div>
+<div class="number" id="count">—</div><h2 id="label">Show one hand to the camera</h2>
+<p class="muted">Estimated extended fingers</p><div class="meter"><i id="bar"></i></div>
+<div class="metrics"><div><b id="confidence">—</b><small>Tracking confidence</small></div><div><b id="time">—</b><small>Last update</small></div></div>
+<p class="tip"><b>Positioning tip</b><br>Keep your full hand inside the frame, palm facing the camera, with good lighting.</p></aside>
+</section>
+<section class="bottom">
+<article class="panel"><h3>How to test</h3><div class="steps"><div><b>01</b><strong>Show your palm</strong><small>Bring one hand fully into view.</small></div><div><b>02</b><strong>Hold a pose</strong><small>Keep your fingers still.</small></div><div><b>03</b><strong>See the result</strong><small>Read the estimated count.</small></div></div></article>
+<article class="panel"><div class="history-title"><h3>Detection history</h3><button id="clear">Clear</button></div><div id="history" class="history muted">Your detected poses will appear here.</div></article>
+</section>
+<p class="notice"><b>Prototype limitation:</b> These are heuristic finger-count labels, not validated Indian Sign Language letters or word translations. Actual ISL recognition needs a labelled dataset, a trained model and evaluation with ISL users.</p>
+<footer>ARYANSIGNAI · PYTHON / FLASK / OPENCV / MEDIAPIPE</footer></main>
+<script>
+let items=[],last="",lastAt=0;
+function render(){document.getElementById("history").innerHTML=items.length?items.map(x=>`<div class="entry"><b>${x.n}</b><span>${x.label}</span><small>${x.time}</small></div>`).join(""):"Your detected poses will appear here."}
+document.getElementById("clear").onclick=()=>{items=[];last="";render()};
+async function update(){try{let d=await(await fetch("/status")).json();
+document.getElementById("label").textContent=d.label;document.getElementById("count").textContent=d.found?d.fingers:"—";
+document.getElementById("confidence").textContent=d.found?d.confidence+"%":"—";document.getElementById("time").textContent=d.time||"—";
+document.getElementById("bar").style.width=(d.fingers*20)+"%";document.getElementById("pill").textContent=d.found?"HAND FOUND":"SEARCHING";
+let key=d.label+d.fingers;if(d.found&&key!==last&&Date.now()-lastAt>1500){items.unshift({n:d.fingers,label:d.label,time:d.time});items=items.slice(0,8);last=key;lastAt=Date.now();render()}
+}catch(e){document.getElementById("pill").textContent="SERVER OFFLINE"}}
+setInterval(update,450);update();
+</script></body></html>
